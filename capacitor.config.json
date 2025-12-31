@@ -1,0 +1,9 @@
+{
+  "appId": "com.ezb.app",
+  "appName": "EZB App",
+  "webDir": "client/dist",
+  "server": {
+    "url": "https://ezb-app.onrender.com",
+    "cleartext": true
+  }
+}

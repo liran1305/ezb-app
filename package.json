@@ -11,6 +11,12 @@
     "start": "cd server && npm install && npm start"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^8.0.0",
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
   }
 }
