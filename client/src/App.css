@@ -1,0 +1,783 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a365d;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   SIMPLE HOME SCREEN - ONE BIG BUTTON
+   ============================================ */
+
+.simple-home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 40px;
+  letter-spacing: 6px;
+}
+
+.big-camera-btn {
+  background: #3b82f6;
+  border: none;
+  border-radius: 20px;
+  padding: 30px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+  width: 100%;
+  max-width: 280px;
+}
+
+.big-camera-btn:hover {
+  transform: scale(1.02);
+  background: #2563eb;
+}
+
+.big-camera-btn:active {
+  transform: scale(0.98);
+}
+
+.camera-icon {
+  font-size: 3.5rem;
+}
+
+.btn-text {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: white;
+}
+
+.hint {
+  margin-top: 30px;
+  font-size: 1rem;
+  opacity: 0.7;
+  padding: 0 20px;
+}
+
+/* ============================================
+   IMAGE PREVIEW SCREEN
+   ============================================ */
+
+.image-preview-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.image-preview-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f1f3c;
+  max-height: 300px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.image-preview-container img {
+  max-width: 100%;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  align-items: center;
+  text-align: center;
+}
+
+.big-microphone-btn {
+  background: #8b5cf6;
+  border: none;
+  border-radius: 20px;
+  padding: 30px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+  width: 100%;
+  max-width: 320px;
+}
+
+.big-microphone-btn:hover {
+  transform: scale(1.02);
+  background: #7c3aed;
+}
+
+.big-microphone-btn:active {
+  transform: scale(0.98);
+}
+
+.mic-icon {
+  font-size: 3.5rem;
+}
+
+.voice-hint {
+  font-size: 1rem;
+  opacity: 0.8;
+  color: #cbd5e1;
+  padding: 0 20px;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.recording-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.recording-pulse {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.recording-active h2 {
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.big-microphone-btn.recording {
+  background: #ef4444;
+  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.4);
+}
+
+.big-microphone-btn.recording:hover {
+  background: #dc2626;
+}
+
+/* ============================================
+   RECORDING SCREEN
+   ============================================ */
+
+.recording-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  gap: 30px;
+}
+
+.recording-header {
+  text-align: center;
+}
+
+.recording-header h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.recording-hint {
+  font-size: 1rem;
+  color: #cbd5e1;
+}
+
+.recording-indicator {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #2c3e50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  border: 2px solid #3d5a80;
+  transition: all 0.3s ease;
+}
+
+.recording-indicator.active {
+  background: #ef4444;
+  border-color: #dc2626;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.recording-dot {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.recording-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.recording-btn {
+  width: 100%;
+  max-width: 300px;
+  padding: 20px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: #3b82f6;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recording-btn:hover {
+  background: #2563eb;
+}
+
+.recording-btn.stop {
+  background: #ef4444;
+  border: 2px solid #dc2626;
+}
+
+.recording-btn.stop:hover {
+  background: #dc2626;
+}
+
+.cancel-btn {
+  padding: 12px 24px;
+  background: transparent;
+  color: #cbd5e1;
+  border: 2px solid #3d5a80;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  color: #fff;
+  border-color: #5a7da5;
+}
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+
+.simple-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+}
+
+.spinner {
+  width: 80px;
+  height: 80px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 30px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.simple-loading p {
+  font-size: 1.5rem;
+}
+
+.wait-text {
+  opacity: 0.6;
+  margin-top: 10px;
+  font-size: 1.2rem !important;
+}
+
+/* ============================================
+   ERROR SCREEN
+   ============================================ */
+
+.simple-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+}
+
+.error-text {
+  font-size: 1.5rem;
+  margin-bottom: 40px;
+}
+
+.big-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 16px 40px;
+  font-size: 1.2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.big-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.big-btn:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   RESULTS SCREEN
+   ============================================ */
+
+.diagnosis-result {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.image-preview {
+  margin-bottom: 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  max-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1f3c;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+/* Big problem title */
+.problem-header {
+  margin-bottom: 25px;
+}
+
+.problem-header h2 {
+  font-size: 1.6rem;
+  line-height: 1.4;
+  margin-bottom: 15px;
+}
+
+.difficulty-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* DIY Yes/No - BIG and clear */
+.diy-yes {
+  background: #22c55e;
+  padding: 25px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.diy-no {
+  background: #ef4444;
+  padding: 25px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.time-estimate {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* Tutorial video section */
+.tutorial-video-section {
+  background: rgba(239, 68, 68, 0.15);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.tutorial-video-btn {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.tutorial-video-btn:hover {
+  background: #dc2626;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+}
+
+.tutorial-video-btn:active {
+  transform: translateY(0);
+}
+
+.video-title-preview {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+/* Warnings - stand out */
+.warnings {
+  background: #f59e0b;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.warnings h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.warnings ul {
+  padding-right: 25px;
+  font-size: 1.1rem;
+}
+
+.warnings li {
+  margin-bottom: 8px;
+}
+
+/* Steps - clear and numbered */
+.steps {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.steps h3 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+
+.steps ol {
+  padding-right: 30px;
+}
+
+.steps li {
+  font-size: 1.15rem;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.steps li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.step-content {
+  width: 100%;
+}
+
+.step-text {
+  margin-bottom: 12px;
+}
+
+.step-video-container {
+  margin-top: 12px;
+}
+
+.video-link-btn {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.video-link-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.video-link-btn:active {
+  transform: translateY(0);
+}
+
+/* Tools & Materials */
+.tools, .materials {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.tools h3, .materials h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.tools ul, .materials ul {
+  list-style: none;
+}
+
+.tools li, .materials li {
+  font-size: 1.15rem;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+}
+
+.tools li:last-child, .materials li:last-child {
+  border-bottom: none;
+}
+
+.price {
+  color: #86efac;
+  font-weight: bold;
+}
+
+/* Israeli tip */
+.israeli-tip {
+  background: #3b82f6;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.israeli-tip h3 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.israeli-tip p {
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+/* When to call pro */
+.when-to-call {
+  background: rgba(239, 68, 68, 0.3);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.when-to-call h3 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.when-to-call p {
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+/* Reset button - BIG */
+.reset-btn {
+  width: 100%;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: #2563eb;
+}
+
+.reset-btn:active {
+  background: #1d4ed8;
+  transform: scale(0.98);
+}
+
+/* ============================================
+   PWA / MOBILE
+   ============================================ */
+
+@media (display-mode: standalone) {
+  .simple-home {
+    padding-top: env(safe-area-inset-top, 30px);
+  }
+}
+
+/* Ensure tap targets are big enough */
+button {
+  min-height: 50px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .logo {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    letter-spacing: 4px;
+  }
+
+  .big-camera-btn {
+    padding: 25px 40px;
+    max-width: 260px;
+  }
+
+  .camera-icon {
+    font-size: 3rem;
+  }
+
+  .btn-text {
+    font-size: 1.1rem;
+  }
+
+  .hint {
+    font-size: 0.9rem;
+    margin-top: 25px;
+  }
+
+  .recording-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .problem-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .diy-yes, .diy-no {
+    padding: 20px;
+    font-size: 1.3rem;
+  }
+
+  .steps li, .tools li, .materials li {
+    font-size: 1rem;
+  }
+
+  .steps h3, .tools h3, .materials h3,
+  .warnings h3, .israeli-tip h3, .when-to-call h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .logo {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+  }
+
+  .big-camera-btn {
+    padding: 20px 35px;
+    max-width: 240px;
+  }
+
+  .camera-icon {
+    font-size: 2.5rem;
+  }
+
+  .btn-text {
+    font-size: 1rem;
+  }
+}

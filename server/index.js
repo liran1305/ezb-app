@@ -1,0 +1,239 @@
+import Anthropic from "@anthropic-ai/sdk";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import FormData from "form-data";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load from client/.env
+dotenv.config({ path: path.resolve(__dirname, "../client/.env") });
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: "50mb" }));
+
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+}
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. המשתמש שלח לך תמונה של בעיה בבית.
+
+נתח את התמונה וספק תשובה בפורמט JSON בלבד (ללא markdown, ללא backticks):
+
+{
+  "problem": "תיאור קצר של הבעיה שזיהית",
+  "canDIY": true/false,
+  "difficultyScore": 1-10,
+  "difficultyText": "קל/בינוני/מורכב/צריך איש מקצוע",
+  "timeEstimate": "זמן משוער לתיקון",
+  "videoSearchQuery": "איך להחליף מחסנית ברז במטבח",
+  "steps": [
+    "צעד 1...",
+    "צעד 2...",
+    "צעד 3..."
+  ],
+  "tools": ["כלי 1", "כלי 2"],
+  "materials": [
+    {"item": "שם הפריט", "estimatedPrice": "מחיר משוער בשקלים"}
+  ],
+  "warnings": ["אזהרה 1 אם יש"],
+  "whenToCallPro": "מתי כדאי להזמין בעל מקצוע",
+  "israeliTip": "טיפ ספציפי לישראל (חנויות, מוצרים מקומיים וכו')"
+}
+
+כללים חשובים:
+- הוסף שדה "videoSearchQuery" שמכיל שאלה בעברית לחיפוש סרטון הדרכה ביוטיוב
+- videoSearchQuery צריך להתחיל ב"איך ל..." או "איך להחליף..." או "איך לתקן..."
+- videoSearchQuery צריך להיות ספציפי ביותר לחלק המדויק שצריך לתקן/להחליף
+- תמיד ציין את הסוג המדויק של הפריט (לדוגמה: "ברז במטבח", "ברז במקלחת", "ברז בכיור אמבטיה" - לא סתם "ברז")
+- אם הבעיה היא טפטוף ברז - כנראה צריך להחליף מחסנית. אם אסלה דולפת - כנראה צריך להחליף פלאפר
+- steps צריך להיות מערך של מחרוזות פשוטות (לא אובייקטים)
+- אם אתה לא בטוח מה הבעיה, שאל שאלה מבהירה בשדה problem
+- תמיד התחשב בבטיחות - חשמל ומים דורשים זהירות
+- מחירים בשקלים, חנויות ישראליות (הום סנטר, איקאה, ACE)
+- אם הבעיה מסוכנת או מורכבת מדי - המלץ על איש מקצוע
+- השב בעברית בלבד
+- החזר JSON תקין בלבד, ללא טקסט נוסף
+
+דוגמאות לvideoSearchQuery טובות (בעברית וספציפיות!):
+- "איך להחליף מחסנית ברז במטבח" (ברז מטפטף במטבח - צריך החלפת מחסנית)
+- "איך להחליף מחסנית ברז במקלחת" (ברז מטפטף במקלחת - לא אותו דבר כמו מטבח!)
+- "איך להחליף פלאפר באסלה" (אסלה דולפת)
+- "איך להחליף צילינדר מנעול דלת" (מנעול תקוע)
+- "איך להחליף מתג אור" (מתג מהבהב)
+- "איך לפתוח סתימה בכיור" (כיור סתום)
+
+דוגמאות רעות (לא ספציפיות מספיק):
+- "איך לתקן ברז" (איזה ברז? מטבח? מקלחת? כיור?)
+- "תיקון אסלה" (מה צריך לתקן? פלאפר? מכסה? שטיפה?)
+- "תיקון מנעול" (לא ברור איזה חלק)
+
+חשוב מאוד: תמיד ציין את המיקום/סוג המדויק של הפריט בשאלה!`;
+
+// Function to search for YouTube video guide
+async function searchYouTubeVideo(query) {
+  try {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+
+    if (!apiKey) {
+      console.log('YouTube API key not found, using search URL fallback');
+      return {
+        searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+        searchQuery: query
+      };
+    }
+
+    // Claude already generated a Hebrew query, use it directly
+    console.log(`Searching YouTube for: ${query}`);
+
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=15&key=${apiKey}&relevanceLanguage=he&regionCode=IL&safeSearch=strict&order=relevance&videoDuration=medium`;
+
+    const response = await fetch(searchUrl);
+    const data = await response.json();
+
+    console.log(`Found ${data.items?.length || 0} results`);
+
+    // STRICT Hebrew filter - must have Hebrew characters in title
+    if (data.items && data.items.length > 0) {
+      // Filter for videos with Hebrew text in title
+      const hebrewVideos = data.items.filter(item => /[\u0590-\u05FF]/.test(item.snippet.title));
+
+      console.log(`Found ${hebrewVideos.length} videos with Hebrew titles`);
+
+      if (hebrewVideos.length > 0) {
+        // Look for videos with tutorial keywords in Hebrew
+        const hebrewTutorialKeywords = ['איך', 'תיקון', 'הדרכה', 'למתחילים', 'החלפה', 'בעצמך'];
+        const bestVideo = hebrewVideos.find(item =>
+          hebrewTutorialKeywords.some(keyword =>
+            item.snippet.title.includes(keyword)
+          )
+        ) || hebrewVideos[0]; // Fallback to first Hebrew video
+
+        console.log(`Selected Hebrew video: ${bestVideo.snippet.title}`);
+
+        return {
+          videoId: bestVideo.id.videoId,
+          title: bestVideo.snippet.title,
+          searchUrl: `https://www.youtube.com/watch?v=${bestVideo.id.videoId}`
+        };
+      }
+    }
+
+    // If no Hebrew video found, return search URL as fallback
+    console.log('No Hebrew video found, returning search URL');
+    return {
+      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+      searchQuery: query
+    };
+  } catch (error) {
+    console.error('YouTube search error:', error);
+    // Fallback to search URL
+    return {
+      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+      searchQuery: query
+    };
+  }
+}
+
+app.post("/api/diagnose", async (req, res) => {
+  try {
+    const { image, description } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ error: "No image provided" });
+    }
+
+    // Remove data URL prefix if present
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+
+    // Build the message content array
+    const messageContent = [
+      {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: "image/jpeg",
+          data: base64Data,
+        },
+      },
+    ];
+
+    // Build the prompt with voice description if available
+    let finalPrompt = DIAGNOSIS_PROMPT;
+    if (description && description.trim()) {
+      console.log('Voice description:', description);
+      finalPrompt += `\n\nתיאור קולי מהמשתמש: "${description}"\n\nשלב את המידע מהתיאור הקולי בניתוח שלך.`;
+    }
+
+    messageContent.push({
+      type: "text",
+      text: finalPrompt,
+    });
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      messages: [
+        {
+          role: "user",
+          content: messageContent,
+        },
+      ],
+    });
+
+    const textContent = response.content.find((block) => block.type === "text");
+    const resultText = textContent?.text || "";
+
+    // Parse JSON response
+    let diagnosis;
+    try {
+      diagnosis = JSON.parse(resultText);
+    } catch {
+      // If JSON parsing fails, return raw text
+      diagnosis = {
+        problem: resultText,
+        canDIY: false,
+        difficultyScore: 5,
+        difficultyText: "לא ניתן לקבוע",
+        steps: [],
+        tools: [],
+        materials: [],
+        warnings: ["לא הצלחתי לנתח את התמונה כראוי"],
+      };
+    }
+
+    // Fetch ONE YouTube video for the entire repair process
+    if (diagnosis.videoSearchQuery) {
+      const videoData = await searchYouTubeVideo(diagnosis.videoSearchQuery);
+      diagnosis.tutorialVideo = videoData;
+      delete diagnosis.videoSearchQuery; // Remove the search query from response
+    }
+
+    res.json({ success: true, diagnosis });
+  } catch (error) {
+    console.error("Diagnosis error:", error);
+    res.status(500).json({ error: "Failed to analyze image" });
+  }
+});
+
+// Serve React app for any other routes (in production)
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
