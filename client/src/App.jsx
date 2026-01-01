@@ -121,14 +121,29 @@ function App() {
       recognitionRef.current.interimResults = true;
 
       let finalTranscript = '';
+      let interimTranscript = '';
 
       recognitionRef.current.onresult = (event) => {
-        let transcript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+        let interim = '';
+        let final = '';
+
+        // Separate final and interim results to avoid repetition
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            final += transcript + ' ';
+          } else {
+            interim += transcript;
+          }
         }
-        finalTranscript = transcript;
-        setVoiceTranscript(transcript);
+
+        if (final) {
+          finalTranscript += final;
+        }
+        interimTranscript = interim;
+
+        // Display both final and interim
+        setVoiceTranscript(finalTranscript + interimTranscript);
       };
 
       recognitionRef.current.onerror = (event) => {
