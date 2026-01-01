@@ -147,20 +147,47 @@ async function searchYouTubeVideo(query) {
       console.log(`Found ${hebrewVideos.length} videos with Hebrew titles`);
 
       if (hebrewVideos.length > 0) {
-        const hebrewTutorialKeywords = ['איך', 'תיקון', 'הדרכה', 'למתחילים', 'החלפה', 'בעצמך'];
-        const bestVideo = hebrewVideos.find(item =>
-          hebrewTutorialKeywords.some(keyword =>
-            item.snippet.title.includes(keyword)
-          )
-        ) || hebrewVideos[0];
+        // Check if the search query has specific features (like I-feel, timer, etc.)
+        const specificFeatures = ['I-feel', 'אייפיל', 'I-Feel', 'טיימר', 'timer', 'טורבו', 'turbo'];
+        const queryHasSpecificFeature = specificFeatures.some(feature =>
+          query.toLowerCase().includes(feature.toLowerCase())
+        );
 
-        console.log(`Selected Hebrew video: ${bestVideo.snippet.title}`);
+        // If query has specific feature, video MUST mention it too
+        if (queryHasSpecificFeature) {
+          const relevantVideo = hebrewVideos.find(item =>
+            specificFeatures.some(feature =>
+              item.snippet.title.toLowerCase().includes(feature.toLowerCase())
+            )
+          );
 
-        return {
-          videoId: bestVideo.id.videoId,
-          title: bestVideo.snippet.title,
-          searchUrl: `https://www.youtube.com/watch?v=${bestVideo.id.videoId}`
-        };
+          if (relevantVideo) {
+            console.log(`Selected Hebrew video with specific feature: ${relevantVideo.snippet.title}`);
+            return {
+              videoId: relevantVideo.id.videoId,
+              title: relevantVideo.snippet.title,
+              searchUrl: `https://www.youtube.com/watch?v=${relevantVideo.id.videoId}`
+            };
+          } else {
+            console.log('No Hebrew video found matching specific feature, trying English...');
+            // Continue to English search
+          }
+        } else {
+          // No specific feature - use generic tutorial keywords
+          const hebrewTutorialKeywords = ['איך', 'תיקון', 'הדרכה', 'למתחילים', 'החלפה', 'בעצמך'];
+          const bestVideo = hebrewVideos.find(item =>
+            hebrewTutorialKeywords.some(keyword =>
+              item.snippet.title.includes(keyword)
+            )
+          ) || hebrewVideos[0];
+
+          console.log(`Selected Hebrew video: ${bestVideo.snippet.title}`);
+          return {
+            videoId: bestVideo.id.videoId,
+            title: bestVideo.snippet.title,
+            searchUrl: `https://www.youtube.com/watch?v=${bestVideo.id.videoId}`
+          };
+        }
       }
     }
 
