@@ -25,6 +25,27 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Clean duplicated voice transcripts
+function cleanVoiceTranscript(text) {
+  if (!text || !text.trim()) return null;
+
+  // Split into words
+  const words = text.trim().split(/\s+/);
+  if (words.length === 0) return null;
+
+  // Remove consecutive duplicate words
+  const cleaned = [words[0]];
+  for (let i = 1; i < words.length; i++) {
+    if (words[i] !== words[i - 1]) {
+      cleaned.push(words[i]);
+    }
+  }
+
+  const result = cleaned.join(' ');
+  console.log(`Voice cleaned: ${words.length} words → ${cleaned.length} words`);
+  return result;
+}
+
 const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. המשתמש שלח לך תמונה של בעיה בבית.
 
 נתח את התמונה וספק תשובה בפורמט JSON בלבד (ללא markdown, ללא backticks):
@@ -254,6 +275,14 @@ app.post("/api/diagnose", async (req, res) => {
     // Remove data URL prefix if present
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
 
+    // Clean voice description
+    const cleanedDescription = cleanVoiceTranscript(description);
+
+    if (cleanedDescription) {
+      console.log('Original voice:', description?.substring(0, 100));
+      console.log('Cleaned voice:', cleanedDescription);
+    }
+
     // Build the message content array
     const messageContent = [
       {
@@ -266,27 +295,18 @@ app.post("/api/diagnose", async (req, res) => {
       },
     ];
 
-    // Build the prompt with voice description if available
+    // Build the prompt - simpler and cleaner
     let finalPrompt = DIAGNOSIS_PROMPT;
-    if (description && description.trim()) {
-      console.log('Voice description:', description);
-      finalPrompt += `\n\n⚠️⚠️⚠️ חשוב ביותר - תיאור קולי מהמשתמש: "${description}"
 
-כללים קריטיים לטיפול בתיאור הקולי:
-1. אם יש חזרות בטקסט (בגלל שגיאות זיהוי קולי), התעלם מהן והסתכל על המילים הייחודיות
-2. אם המשתמש ציין תכונה/כפתור/פונקציה ספציפית (כמו "אייפיל", "I-feel", "טיימר", "טורבו" וכו') - זו הבעיה המדויקת!
-3. ב-videoSearchQuery חייב להופיע שם התכונה הספציפית שהמשתמש ציין - אל תכתוב "שלט לא עובד" אם המשתמש אמר "I-feel לא עובד"
-4. אם המשתמש אמר "אייפיל" או "I-feel" - ה-videoSearchQuery חייב לכלול "I-feel" או "אייפיל"
-5. problem ו-videoSearchQuery חייבים לכלול את התכונה הספציפית שהמשתמש ציין
+    if (cleanedDescription) {
+      finalPrompt = `המשתמש תיאר את הבעיה בקול: "${cleanedDescription}"
 
-דוגמאות:
-- משתמש אמר: "שלט מזגן אייפיל לא עובד"
-  → problem: "כפתור/תכונת I-feel בשלט המזגן לא עובד"
-  → videoSearchQuery: "איך לתקן תכונת I-feel בשלט מזגן"
+זכור:
+- אם המשתמש ציין תכונה ספציפית (אייפיל/I-feel, טיימר, טורבו) - זו הבעיה, תכלול אותה ב-problem וב-videoSearchQuery
+- "אייפיל" = I-feel (תכונה במזגן)
+- אם לא הבנת מהתמונה - שאל שאלה מבהירה
 
-- משתמש אמר: "טיימר של המזגן לא עובד"
-  → problem: "טיימר בשלט המזגן לא עובד"
-  → videoSearchQuery: "איך לתקן טיימר בשלט מזגן"`;
+${DIAGNOSIS_PROMPT}`;
     }
 
     messageContent.push({
