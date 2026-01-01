@@ -87,7 +87,17 @@ async function translateToEnglish(hebrewQuery) {
       max_tokens: 100,
       messages: [{
         role: 'user',
-        content: `Translate this Hebrew YouTube search query to English. Remove any Israeli brand names (like Electra, Tadiran, Amcor, Tornado). Make it simple and generic for better search results. Only return the English translation, nothing else.
+        content: `Translate this Hebrew YouTube search query to English for finding tutorial videos.
+
+CRITICAL RULES:
+1. Remove ALL brand names (Electra/אלקטרה, Tadiran/תדיראן, Amcor/אמקור, Tornado/טורנדו, etc.)
+2. Keep it generic - Israeli brands won't have English videos
+3. Focus on the device type and problem, not the brand
+4. Keep it short and simple for better YouTube results
+
+Examples:
+"איך לתקן תכונת I-feel בשלט מזגן אלקטרה" → "air conditioner i-feel sensor not working"
+"תיקון שלט מזגן תדיראן" → "air conditioner remote repair"
 
 Hebrew query: ${hebrewQuery}
 
