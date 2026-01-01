@@ -25,7 +25,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Clean duplicated voice transcripts
+// Clean duplicated voice transcripts - removes both duplicate words AND repeated phrases
 function cleanVoiceTranscript(text) {
   if (!text || !text.trim()) return null;
 
@@ -33,17 +33,48 @@ function cleanVoiceTranscript(text) {
   const words = text.trim().split(/\s+/);
   if (words.length === 0) return null;
 
-  // Remove consecutive duplicate words
-  const cleaned = [words[0]];
+  // Step 1: Remove consecutive duplicate words
+  const dedupedWords = [words[0]];
   for (let i = 1; i < words.length; i++) {
     if (words[i] !== words[i - 1]) {
-      cleaned.push(words[i]);
+      dedupedWords.push(words[i]);
     }
   }
 
-  const result = cleaned.join(' ');
-  console.log(`Voice cleaned: ${words.length} words → ${cleaned.length} words`);
-  return result;
+  // Step 2: Remove repeated phrases (2-4 words)
+  // Look for patterns like "שלט אלקטרה שלט אלקטרה שלט אלקטרה"
+  let cleaned = dedupedWords.join(' ');
+
+  // Try phrase sizes from 4 words down to 2 words
+  for (let phraseSize = 4; phraseSize >= 2; phraseSize--) {
+    let changed = true;
+
+    // Keep removing repeated phrases until no more are found
+    while (changed) {
+      changed = false;
+      const currentWords = cleaned.split(/\s+/);
+
+      // Look for repeated phrases
+      for (let i = 0; i <= currentWords.length - phraseSize * 2; i++) {
+        const phrase1 = currentWords.slice(i, i + phraseSize).join(' ');
+        const phrase2 = currentWords.slice(i + phraseSize, i + phraseSize * 2).join(' ');
+
+        if (phrase1 === phrase2) {
+          // Found a repeated phrase - remove the duplicate
+          const before = currentWords.slice(0, i + phraseSize);
+          const after = currentWords.slice(i + phraseSize * 2);
+          cleaned = [...before, ...after].join(' ');
+          changed = true;
+          break;
+        }
+      }
+    }
+  }
+
+  const finalWords = cleaned.split(/\s+/).filter(w => w.length > 0);
+  console.log(`Voice cleaned: ${words.length} words → ${finalWords.length} words (removed duplicates and repeated phrases)`);
+
+  return finalWords.join(' ');
 }
 
 const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. המשתמש שלח לך תמונה של בעיה בבית.
