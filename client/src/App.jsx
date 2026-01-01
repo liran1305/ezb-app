@@ -32,6 +32,10 @@ function App() {
         ? '/api/diagnose'
         : (import.meta.env.VITE_API_URL || "http://localhost:4000/api/diagnose");
 
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,7 +43,22 @@ function App() {
           image: imageData,
           description: voiceDescription
         }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+
+      // Handle HTTP errors
+      if (!response.ok) {
+        if (response.status === 500) {
+          setError("שגיאה בשרת. אנא נסה שוב בעוד כמה רגעים.");
+        } else if (response.status === 429) {
+          setError("יותר מדי בקשות. המתן רגע ונסה שוב.");
+        } else {
+          setError(`שגיאה (${response.status}). נסה שוב.`);
+        }
+        return;
+      }
 
       const data = await response.json();
 
@@ -49,8 +68,16 @@ function App() {
         setError(data.error || "משהו השתבש, נסה שוב");
       }
     } catch (err) {
-      setError("אין חיבור. בדוק את האינטרנט ונסה שוב.");
-      console.error(err);
+      console.error('Analyze image error:', err);
+
+      // Better error messages based on error type
+      if (err.name === 'AbortError') {
+        setError("הבקשה לקחה יותר מדי זמן. נסה שוב.");
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('network')) {
+        setError("אין חיבור לאינטרנט. בדוק את החיבור ונסה שוב.");
+      } else {
+        setError("שגיאה לא צפויה. נסה שוב.");
+      }
     } finally {
       setLoading(false);
     }
@@ -90,8 +117,17 @@ function App() {
       }
     } catch (error) {
       console.error('Camera error:', error);
-      // Fallback to file input if camera fails
-      fileInputRef.current?.click();
+
+      // Handle specific camera errors
+      if (error.message && error.message.includes('permission')) {
+        setError("אין הרשאה למצלמה. אנא אפשר גישה למצלמה בהגדרות.");
+      } else if (error.message && error.message.includes('cancel')) {
+        // User cancelled - don't show error
+        return;
+      } else {
+        // Fallback to file input silently
+        fileInputRef.current?.click();
+      }
     }
   };
 
@@ -110,8 +146,8 @@ function App() {
 
       if (!isSecureContext) {
         // Web Speech API requires HTTPS on mobile
-        alert("זיהוי קולי דורש חיבור מאובטח (HTTPS). נמשיך בלי הקלטה קולית.");
-        analyzeImage(image, null);
+        setError("זיהוי קולי דורש HTTPS. ממשיך בלי תיאור קולי.");
+        setTimeout(() => analyzeImage(image, null), 2000);
         return;
       }
 
@@ -148,26 +184,35 @@ function App() {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-
-        // Handle specific errors
-        if (event.error === 'not-allowed') {
-          alert("גישה למיקרופון נדחתה. אנא אפשר גישה למיקרופון בהגדרות הדפדפן. נמשיך בלי הקלטה קולית.");
-          analyzeImage(image, null);
-        } else if (event.error === 'no-speech') {
-          setError("לא זוהה דיבור. נסה שוב.");
-        } else {
-          alert(`שגיאה בזיהוי קולי: ${event.error}. נמשיך בלי הקלטה קולית.`);
-          analyzeImage(image, null);
-        }
         setIsRecordingAudio(false);
+
+        // Handle specific errors with consistent UI
+        if (event.error === 'not-allowed') {
+          setError("אין הרשאה למיקרופון. אפשר גישה בהגדרות והמשך בלי קול.");
+          setTimeout(() => analyzeImage(image, null), 2000);
+        } else if (event.error === 'no-speech') {
+          setError("לא זוהה דיבור. נסה שוב או המשך בלי קול.");
+          setTimeout(() => setError(null), 3000);
+        } else if (event.error === 'aborted') {
+          // User stopped recording - continue without voice
+          analyzeImage(image, null);
+        } else if (event.error === 'network') {
+          setError("בעיית רשת. ממשיך בלי זיהוי קולי.");
+          setTimeout(() => analyzeImage(image, null), 2000);
+        } else {
+          setError("שגיאת זיהוי קולי. ממשיך בלי תיאור קולי.");
+          setTimeout(() => analyzeImage(image, null), 2000);
+        }
       };
 
       recognitionRef.current.onend = () => {
         console.log('Recording ended. Transcript:', finalTranscript);
+        setIsRecordingAudio(false);
+
         if (finalTranscript && finalTranscript.trim()) {
           analyzeImage(image, finalTranscript);
         } else {
-          alert("לא זוהה טקסט. נמשיך בלי הקלטה קולית.");
+          // No transcript - continue without voice
           analyzeImage(image, null);
         }
       };
@@ -177,8 +222,8 @@ function App() {
       setVoiceTranscript("");
     } catch (err) {
       console.error('Start recording error:', err);
-      alert(`לא ניתן להפעיל את המיקרופון: ${err.message}. נמשיך בלי הקלטה קולית.`);
-      analyzeImage(image, null);
+      setError("לא ניתן להפעיל מיקרופון. ממשיך בלי תיאור קולי.");
+      setTimeout(() => analyzeImage(image, null), 2000);
     }
   };
 
