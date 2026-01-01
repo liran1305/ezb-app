@@ -72,10 +72,19 @@ const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. 
 - "איך להחליף מתג אור" (מתג מהבהב)
 - "איך לפתוח סתימה בכיור" (כיור סתום)
 
+שלטים רחוקים - כללים מיוחדים:
+- אם הבעיה היא בתכונה ספציפית בשלט (I-feel, טיימר, טורבו, וכו'):
+  → חפש הסבר על איך להפעיל/להשתמש בתכונה, לא "תיקון"
+  → דוגמה: "איך להשתמש בתכונת I-feel במזגן" (לא "איך לתקן I-feel")
+  → דוגמה: "איך לכוון טיימר במזגן" (לא "תיקון טיימר")
+- אם השלט בכלל לא עובד:
+  → "איך להחליף סוללות בשלט מזגן" או "איך לאפס שלט מזגן"
+
 דוגמאות רעות (לא ספציפיות מספיק):
 - "איך לתקן ברז" (איזה ברז? מטבח? מקלחת? כיור?)
 - "תיקון אסלה" (מה צריך לתקן? פלאפר? מכסה? שטיפה?)
 - "תיקון מנעול" (לא ברור איזה חלק)
+- "איך לתקן I-feel" (I-feel זו תכונה, לא משהו שמתקנים - צריך הסבר איך להשתמש בה!)
 
 חשוב מאוד: תמיד ציין את המיקום/סוג המדויק של הפריט בשאלה!`;
 
@@ -93,13 +102,16 @@ CRITICAL RULES:
 1. Remove ALL brand names (Electra/אלקטרה, Tadiran/תדיראן, Amcor/אמקור, Tornado/טורנדו, etc.)
 2. Keep it generic - Israeli brands won't have English videos
 3. Focus on the device type and problem, not the brand
-4. Be VERY SPECIFIC - use exact technical terms like "remote control", "AC remote", "I-Feel sensor"
-5. Add "how to fix" or "repair" to get tutorial videos, not product reviews
+4. Be VERY SPECIFIC - use exact technical terms like "remote control", "AC remote"
+5. For FEATURES (I-feel, timer, turbo), search "how to use" NOT "how to fix"
+6. For broken remotes, search "how to fix" or "troubleshoot"
 
 Examples:
-"איך לתקן תכונת I-feel בשלט מזגן אלקטרה" → "how to fix AC remote i-feel sensor"
-"תיקון שלט מזגן תדיראן" → "how to repair air conditioner remote control"
-"טיימר מזגן לא עובד" → "how to fix AC timer on remote"
+"איך להשתמש בתכונת I-feel במזגן" → "how to use AC i-feel function"
+"איך לתקן תכונת I-feel בשלט מזגן" → "how to use AC remote i-feel feature"
+"איך לכוון טיימר במזגן" → "how to set AC timer"
+"שלט מזגן לא עובד" → "AC remote not working troubleshoot"
+"איך להחליף סוללות שלט מזגן" → "how to replace AC remote batteries"
 
 Hebrew query: ${hebrewQuery}
 
