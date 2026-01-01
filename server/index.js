@@ -93,11 +93,13 @@ CRITICAL RULES:
 1. Remove ALL brand names (Electra/אלקטרה, Tadiran/תדיראן, Amcor/אמקור, Tornado/טורנדו, etc.)
 2. Keep it generic - Israeli brands won't have English videos
 3. Focus on the device type and problem, not the brand
-4. Keep it short and simple for better YouTube results
+4. Be VERY SPECIFIC - use exact technical terms like "remote control", "AC remote", "I-Feel sensor"
+5. Add "how to fix" or "repair" to get tutorial videos, not product reviews
 
 Examples:
-"איך לתקן תכונת I-feel בשלט מזגן אלקטרה" → "air conditioner i-feel sensor not working"
-"תיקון שלט מזגן תדיראן" → "air conditioner remote repair"
+"איך לתקן תכונת I-feel בשלט מזגן אלקטרה" → "how to fix AC remote i-feel sensor"
+"תיקון שלט מזגן תדיראן" → "how to repair air conditioner remote control"
+"טיימר מזגן לא עובד" → "how to fix AC timer on remote"
 
 Hebrew query: ${hebrewQuery}
 
