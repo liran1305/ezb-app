@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import DiagnosisResult from "./components/DiagnosisResult";
 import "./App.css";
 
@@ -76,8 +77,22 @@ function App() {
     }
   };
 
-  const openCamera = () => {
-    fileInputRef.current?.click();
+  const openCamera = async () => {
+    try {
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        quality: 90,
+      });
+
+      if (photo.dataUrl) {
+        handleCapture(photo.dataUrl);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      // Fallback to file input if camera fails
+      fileInputRef.current?.click();
+    }
   };
 
   const startAudioRecording = async () => {
