@@ -79,38 +79,30 @@ const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. 
 
 חשוב מאוד: תמיד ציין את המיקום/סוג המדויק של הפריט בשאלה!`;
 
-// Function to remove Israeli brand names for English search
-function removeIsraeliBrands(query) {
-  const israeliBrands = ['אלקטרה', 'תדיראן', 'אמקור', 'טורנדו', 'electra', 'tadiran', 'amcor', 'tornado'];
-  let cleanQuery = query;
-  israeliBrands.forEach(brand => {
-    cleanQuery = cleanQuery.replace(new RegExp(brand, 'gi'), '').trim();
-  });
-  return cleanQuery;
-}
+// Function to translate Hebrew query to English using Claude AI
+async function translateToEnglish(hebrewQuery) {
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 100,
+      messages: [{
+        role: 'user',
+        content: `Translate this Hebrew YouTube search query to English. Remove any Israeli brand names (like Electra, Tadiran, Amcor, Tornado). Make it simple and generic for better search results. Only return the English translation, nothing else.
 
-// Function to translate Hebrew repair terms to English
-function translateToEnglish(hebrewQuery) {
-  const translations = {
-    'איך לתקן': 'how to fix',
-    'איך להחליף': 'how to replace',
-    'תיקון': 'repair',
-    'החלפה': 'replacement',
-    'שלט': 'remote',
-    'מזגן': 'air conditioner',
-    'אייפיל': 'I-Feel',
-    'כפתור': 'button',
-    'לא עובד': 'not working',
-    'תקוע': 'stuck',
-    'שבור': 'broken'
-  };
+Hebrew query: ${hebrewQuery}
 
-  let englishQuery = hebrewQuery;
-  Object.entries(translations).forEach(([hebrew, english]) => {
-    englishQuery = englishQuery.replace(new RegExp(hebrew, 'g'), english);
-  });
+English translation:`
+      }]
+    });
 
-  return englishQuery;
+    const englishQuery = response.content[0].text.trim();
+    console.log(`AI translated to English: ${englishQuery}`);
+    return englishQuery;
+  } catch (error) {
+    console.error('Translation error:', error);
+    // Fallback: just remove Hebrew characters
+    return hebrewQuery.replace(/[\u0590-\u05FF]/g, '').trim();
+  }
 }
 
 // Function to search for YouTube video guide
@@ -163,7 +155,7 @@ async function searchYouTubeVideo(query) {
     // If no Hebrew video found, try English search
     console.log('No Hebrew video found, trying English search...');
 
-    const englishQuery = translateToEnglish(removeIsraeliBrands(query));
+    const englishQuery = await translateToEnglish(query);
     console.log(`English search query: ${englishQuery}`);
 
     const englishSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(englishQuery)}&type=video&maxResults=15&key=${apiKey}&relevanceLanguage=en&safeSearch=strict&order=relevance&videoDuration=medium`;
