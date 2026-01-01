@@ -44,7 +44,7 @@ function DiagnosisResult({ diagnosis, image, onReset }) {
       )}
 
       {/* TUTORIAL VIDEO - One video for the entire repair */}
-      {diagnosis.tutorialVideo && (
+      {diagnosis.tutorialVideo && !diagnosis.tutorialVideo.noVideo && (
         <div className="tutorial-video-section">
           <a
             href={diagnosis.tutorialVideo.searchUrl}
@@ -57,6 +57,15 @@ function DiagnosisResult({ diagnosis, image, onReset }) {
           {diagnosis.tutorialVideo.title && (
             <p className="video-title-preview">{diagnosis.tutorialVideo.title}</p>
           )}
+        </div>
+      )}
+
+      {/* NO VIDEO FOUND - Show message */}
+      {diagnosis.tutorialVideo && diagnosis.tutorialVideo.noVideo && (
+        <div className="no-video-section">
+          <p className="no-video-message">
+            {diagnosis.tutorialVideo.message}
+          </p>
         </div>
       )}
 

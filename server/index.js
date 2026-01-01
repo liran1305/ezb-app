@@ -79,6 +79,40 @@ const DIAGNOSIS_PROMPT = `אתה מומחה לתיקוני בית בישראל. 
 
 חשוב מאוד: תמיד ציין את המיקום/סוג המדויק של הפריט בשאלה!`;
 
+// Function to remove Israeli brand names for English search
+function removeIsraeliBrands(query) {
+  const israeliBrands = ['אלקטרה', 'תדיראן', 'אמקור', 'טורנדו', 'electra', 'tadiran', 'amcor', 'tornado'];
+  let cleanQuery = query;
+  israeliBrands.forEach(brand => {
+    cleanQuery = cleanQuery.replace(new RegExp(brand, 'gi'), '').trim();
+  });
+  return cleanQuery;
+}
+
+// Function to translate Hebrew repair terms to English
+function translateToEnglish(hebrewQuery) {
+  const translations = {
+    'איך לתקן': 'how to fix',
+    'איך להחליף': 'how to replace',
+    'תיקון': 'repair',
+    'החלפה': 'replacement',
+    'שלט': 'remote',
+    'מזגן': 'air conditioner',
+    'אייפיל': 'I-Feel',
+    'כפתור': 'button',
+    'לא עובד': 'not working',
+    'תקוע': 'stuck',
+    'שבור': 'broken'
+  };
+
+  let englishQuery = hebrewQuery;
+  Object.entries(translations).forEach(([hebrew, english]) => {
+    englishQuery = englishQuery.replace(new RegExp(hebrew, 'g'), english);
+  });
+
+  return englishQuery;
+}
+
 // Function to search for YouTube video guide
 async function searchYouTubeVideo(query) {
   try {
@@ -92,7 +126,7 @@ async function searchYouTubeVideo(query) {
       };
     }
 
-    // Claude already generated a Hebrew query, use it directly
+    // Try Hebrew search first
     console.log(`Searching YouTube for: ${query}`);
 
     const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=15&key=${apiKey}&relevanceLanguage=he&regionCode=IL&safeSearch=strict&order=relevance&videoDuration=medium`;
@@ -104,19 +138,17 @@ async function searchYouTubeVideo(query) {
 
     // STRICT Hebrew filter - must have Hebrew characters in title
     if (data.items && data.items.length > 0) {
-      // Filter for videos with Hebrew text in title
       const hebrewVideos = data.items.filter(item => /[\u0590-\u05FF]/.test(item.snippet.title));
 
       console.log(`Found ${hebrewVideos.length} videos with Hebrew titles`);
 
       if (hebrewVideos.length > 0) {
-        // Look for videos with tutorial keywords in Hebrew
         const hebrewTutorialKeywords = ['איך', 'תיקון', 'הדרכה', 'למתחילים', 'החלפה', 'בעצמך'];
         const bestVideo = hebrewVideos.find(item =>
           hebrewTutorialKeywords.some(keyword =>
             item.snippet.title.includes(keyword)
           )
-        ) || hebrewVideos[0]; // Fallback to first Hebrew video
+        ) || hebrewVideos[0];
 
         console.log(`Selected Hebrew video: ${bestVideo.snippet.title}`);
 
@@ -128,19 +160,43 @@ async function searchYouTubeVideo(query) {
       }
     }
 
-    // If no Hebrew video found, return search URL as fallback
-    console.log('No Hebrew video found, returning search URL');
-    return {
-      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
-      searchQuery: query
-    };
+    // If no Hebrew video found, try English search
+    console.log('No Hebrew video found, trying English search...');
+
+    const englishQuery = translateToEnglish(removeIsraeliBrands(query));
+    console.log(`English search query: ${englishQuery}`);
+
+    const englishSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(englishQuery)}&type=video&maxResults=15&key=${apiKey}&relevanceLanguage=en&safeSearch=strict&order=relevance&videoDuration=medium`;
+
+    const englishResponse = await fetch(englishSearchUrl);
+    const englishData = await englishResponse.json();
+
+    console.log(`Found ${englishData.items?.length || 0} English results`);
+
+    if (englishData.items && englishData.items.length > 0) {
+      // Look for tutorial keywords in English
+      const tutorialKeywords = ['how to', 'fix', 'repair', 'replace', 'tutorial', 'guide'];
+      const bestEnglishVideo = englishData.items.find(item =>
+        tutorialKeywords.some(keyword =>
+          item.snippet.title.toLowerCase().includes(keyword)
+        )
+      ) || englishData.items[0];
+
+      console.log(`Selected English video: ${bestEnglishVideo.snippet.title}`);
+
+      return {
+        videoId: bestEnglishVideo.id.videoId,
+        title: bestEnglishVideo.snippet.title,
+        searchUrl: `https://www.youtube.com/watch?v=${bestEnglishVideo.id.videoId}`
+      };
+    }
+
+    // If still no video found, return null (no video available)
+    console.log('No relevant video found in Hebrew or English');
+    return null;
   } catch (error) {
     console.error('YouTube search error:', error);
-    // Fallback to search URL
-    return {
-      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
-      searchQuery: query
-    };
+    return null;
   }
 }
 
@@ -223,7 +279,18 @@ app.post("/api/diagnose", async (req, res) => {
     // Fetch ONE YouTube video for the entire repair process
     if (diagnosis.videoSearchQuery) {
       const videoData = await searchYouTubeVideo(diagnosis.videoSearchQuery);
-      diagnosis.tutorialVideo = videoData;
+
+      if (videoData) {
+        diagnosis.tutorialVideo = videoData;
+      } else {
+        // No video found - provide helpful message
+        diagnosis.tutorialVideo = {
+          noVideo: true,
+          message: "לא נמצא סרטון הדרכה ספציפי לבעיה זו. מומלץ לחפש ביוטיוב באנגלית או להתייעץ עם בעל מקצוע.",
+          searchQuery: diagnosis.videoSearchQuery
+        };
+      }
+
       delete diagnosis.videoSearchQuery; // Remove the search query from response
     }
 
