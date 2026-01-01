@@ -41,12 +41,11 @@ function cleanVoiceTranscript(text) {
     }
   }
 
-  // Step 2: Remove repeated phrases (2-4 words)
-  // Look for patterns like "שלט אלקטרה שלט אלקטרה שלט אלקטרה"
+  // Step 2: Remove repeated phrases (2-8 words) - handle longer repetitions from phone video recording
   let cleaned = dedupedWords.join(' ');
 
-  // Try phrase sizes from 4 words down to 2 words
-  for (let phraseSize = 4; phraseSize >= 2; phraseSize--) {
+  // Try phrase sizes from 8 words down to 2 words (larger first to catch bigger patterns)
+  for (let phraseSize = 8; phraseSize >= 2; phraseSize--) {
     let changed = true;
 
     // Keep removing repeated phrases until no more are found
@@ -71,9 +70,24 @@ function cleanVoiceTranscript(text) {
     }
   }
 
+  // Step 3: Aggressive final pass - if transcript is still very long (>15 words),
+  // look for the most meaningful part (usually at the end)
   const finalWords = cleaned.split(/\s+/).filter(w => w.length > 0);
-  console.log(`Voice cleaned: ${words.length} words → ${finalWords.length} words (removed duplicates and repeated phrases)`);
 
+  // If still too many words and there are clear repetitions, take the last unique segment
+  if (finalWords.length > 15) {
+    // Find the last occurrence of common phrases and keep only what comes after
+    const halfPoint = Math.floor(finalWords.length / 2);
+    const secondHalf = finalWords.slice(halfPoint).join(' ');
+    const cleanedSecondHalf = secondHalf.split(/\s+/).filter(w => w.length > 0);
+
+    if (cleanedSecondHalf.length >= 5 && cleanedSecondHalf.length < finalWords.length) {
+      console.log(`Voice cleaned: ${words.length} words → ${cleanedSecondHalf.length} words (removed duplicates, repeated phrases, and kept last segment)`);
+      return cleanedSecondHalf.join(' ');
+    }
+  }
+
+  console.log(`Voice cleaned: ${words.length} words → ${finalWords.length} words (removed duplicates and repeated phrases)`);
   return finalWords.join(' ');
 }
 

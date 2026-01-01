@@ -251,13 +251,20 @@ function App() {
                   <span className="recording-dot"></span>
                 </div>
                 <h2>מקליט...</h2>
-                <p className="recording-hint">לחץ על הכפתור כדי לעצור</p>
+                {voiceTranscript && voiceTranscript.trim() ? (
+                  <div className="voice-transcript">
+                    <p className="transcript-label">מה שזיהיתי:</p>
+                    <p className="transcript-text">{voiceTranscript}</p>
+                  </div>
+                ) : (
+                  <p className="recording-hint">מדבר... מחכה לזיהוי</p>
+                )}
                 <button
                   className="big-microphone-btn recording"
                   onClick={stopAudioRecording}
                 >
                   <span className="mic-icon">⏹️</span>
-                  <span className="btn-text">עצור הקלטה</span>
+                  <span className="btn-text">עצור ושלח</span>
                 </button>
               </div>
             ) : (
